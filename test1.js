@@ -3,17 +3,19 @@ new p5();
 // create player
 let player = new Player(100, 100);
 
-// create obj
-let obstacles = []
+let enemies = []; // list of all enemies
 
 // create the map
 let map = new Map(0, 0);
 
 function setup() {
     createCanvas(400, 400);
-    // for (let i = 0; i < 5; i++) {
-    //     obstacles.push(new Obstacle(random(0, 400), random(0, 400)))
-    // }
+
+    // spawn enemies
+    for (let i = 0; i < 3; i++) {
+        // enemies.push(new Enemy(random(0, width), random(0, height)));
+        enemies.push(new Enemy(300, 200));
+    }
 }
 
 function draw() {
@@ -23,18 +25,16 @@ function draw() {
     // update and draw the player
     player.display();
 
-    // for (let obstacle of obstacles) {
-    //     obstacle.display();
-    // }
+    // update and draw enemies
+    for (let enemy of enemies) {
+        enemy.display();        
+        enemy.chase(map, player);
+
+    }
 
     player.update();
 
     player.collide(map)
-
-    // for (let obstacle of obstacles) {
-    //     player.collide(obstacle);
-    // }
-    
 }
 
 function keyPressed() {
