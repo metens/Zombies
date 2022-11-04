@@ -1,4 +1,5 @@
 class Bullet {
+  // bullet class
   constructor(xPos, yPos, xVel, yVel, radius) {
     this.position = new p5.Vector(xPos, yPos);
     // this.xPos = xPos;
