@@ -5,6 +5,8 @@ class Enemy {
   max_force = 2;
   max_avoidance_force = 3;
 
+  hitStatus = false;
+
   constructor(x, y) {
     this.old_position = new p5.Vector(x, y);
     this.position = new p5.Vector(x, y);
@@ -14,6 +16,22 @@ class Enemy {
     this.lookAhead = new p5.Vector(0, 0);
     this.lookAheadR = 30; // the radius of view
     this.lookAheadD = 40; // how far to look ahead
+  }
+
+  setHit(player) {
+    for (let bullet = 0; bullet < player.magazine.length; bullet++) {
+      if (
+        p5.Vector.dist(player.magazine[bullet].position, this.position) < 10
+      ) {
+        // bullet hits zombie
+        this.hitStatus = true;
+        player.magazine.splice(bullet, 1); // remove bullet from screen
+      }
+    }
+  }
+
+  getHit() {
+    return this.hitStatus;
   }
 
   display() {
@@ -152,36 +170,88 @@ class Map {
 
 class Player {
   speed = 5;
+  hitStatus = false;
 
   moveRight = false;
   moveLeft = false;
   moveUp = false;
   moveDown = false;
 
+  magazine = [];
+  bullets = 5;
+  bull_speed = 3;
+
   constructor(x, y) {
     this.position = new p5.Vector(x, y);
     this.velocity = new p5.Vector(0, 0);
 
     this.width = 20;
+    this.color = [255, 255, 255];
+
+    // The player animation:
+    this.player = loadImage("/sounds&animations/player.png");
   }
 
   getPos() {
     return [this.position.x, this.position.y];
   }
 
-  display() {
-    fill(255, 255, 255);
-    circle(this.position.x, this.position.y, 20);
+  setCol(r, g, b) {
+    this.color = [r, g, b];
   }
 
-  isHit(enemy) {
-    // was the player hit by the enemy
-    if (p5.Vector.dist(enemy.position, this.position) < 10) {
-      return true;
-    } else {
-      return false;
-    }
+  display(mouseX, mouseY) {
+    let angle = Math.atan2(mouseX - this.position.x, -mouseY + this.position.y);
+
+    push();
+    translate(this.position.x, this.position.y);
+    rotate(angle);
+    imageMode(CENTER);
+    image(this.player, 0, 0, 50, 50); // (image, xpos, ypos, width, height) // xpos/ypos = 0 bc we translate first
+    pop();
   }
+
+  setHit(enemy) {
+    if (p5.Vector.dist(enemy.position, this.position) < 10)
+      this.hitStatus = true;
+  }
+  getHit() {
+    // was the player hit by the enemy?
+    return this.hitStatus;
+  }
+
+  shoot = function (mouseX, mouseY) {
+    const theta = Math.atan2(
+      mouseY - this.position.y,
+      mouseX - this.position.x
+    ); // Finds angle btwn player and mouse position
+    const bulletVel = {
+      x: Math.cos(theta) * this.bull_speed,
+      y: Math.sin(theta) * this.bull_speed,
+    };
+
+    if (this.bullets > 0) {
+      this.magazine.push(
+        new Bullet(this.position.x, this.position.y, bulletVel.x, bulletVel.y)
+      );
+      this.bullets--;
+    }
+  };
+
+  updateBullet = function () {
+    for (let bullet = 0; bullet < this.magazine.length; bullet++) {
+      this.magazine[bullet].position.y += this.magazine[bullet].velocity.y;
+      this.magazine[bullet].position.x += this.magazine[bullet].velocity.x;
+
+      noStroke();
+      fill(0);
+      circle(
+        this.magazine[bullet].position.x,
+        this.magazine[bullet].position.y,
+        this.magazine[bullet].radius
+      );
+    }
+  };
 
   collide(map) {
     map.position.x = 0;
@@ -260,67 +330,4 @@ class Player {
         return moved;
     }
   }
-}
-class Bullet {
-  constructor(xPos, yPos, xVel, yVel, radius) {
-    this.xPos = xPos;
-    this.yPos = yPos;
-    this.xVel = xVel || 0;
-    this.yVel = yVel || 0;
-    this.radius = radius || 10;
-  }
-}
-class Gun {
-  magazine = [];
-  bullets = 5;
-  speed = 3;
-
-  constructor(playerPos, width, height, color) {
-    this.xPos = playerPos[0] || null;
-    this.yPos = playerPos[1] || null;
-    this.width = width || 0;
-    this.height = height || 0;
-    this.color = color || { R: 0, G: 0, B: 0 };
-  }
-
-  holdGun = function (playerPos, mouseX, mouseY) {
-    let angle = Math.atan2(mouseX - playerPos[0], -mouseY + playerPos[1]);
-
-    push();
-    translate(playerPos[0], playerPos[1]);
-    rotate(angle);
-    fill(this.color.R, this.color.G, this.color.B);
-    rect(10, -10, this.width, this.height);
-    pop();
-  };
-
-  shoot = function (playerPos, mouseX, mouseY) {
-    const theta = Math.atan2(mouseY - playerPos[1], mouseX - playerPos[0]); // Finds angle btwn player and mouse position
-    const bulletVel = {
-      x: Math.cos(theta) * this.speed,
-      y: Math.sin(theta) * this.speed,
-    };
-
-    if (this.bullets > 0) {
-      this.magazine.push(
-        new Bullet(playerPos[0], playerPos[1], bulletVel.x, bulletVel.y)
-      );
-      this.bullets--;
-    }
-  };
-
-  updateBullet = function () {
-    for (let bullet = 0; bullet < this.magazine.length; bullet++) {
-      this.magazine[bullet].yPos += this.magazine[bullet].yVel;
-      this.magazine[bullet].xPos += this.magazine[bullet].xVel;
-
-      noStroke();
-      fill(0);
-      circle(
-        this.magazine[bullet].xPos,
-        this.magazine[bullet].yPos,
-        this.magazine[bullet].radius
-      );
-    }
-  };
 }

@@ -2,7 +2,7 @@ new p5();
 
 // create player
 let player = new Player(100, 100);
-let playerGun = new Gun(player.getPos(), 5, 10, { R: 150, G: 100, B: 80 });
+// let playerGun = new Gun(player.getPos(), 5, 10, { R: 150, G: 100, B: 80 });
 
 let enemies = []; // list of all enemies
 
@@ -13,54 +13,47 @@ function setup() {
   createCanvas(400, 400);
 
   // spawn enemies
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 1; i++) {
     // enemies.push(new Enemy(random(0, width), random(0, height)));
     enemies.push(new Enemy(300, 200));
   }
 }
-
-let hit = false;
 
 function draw() {
   // background(0);
   map.display();
 
   // update and draw the player
-  player.display();
-  playerGun.holdGun(player.getPos(), mouseX, mouseY);
-  playerGun.updateBullet();
+  player.display(mouseX, mouseY);
+  player.updateBullet();
 
-  // update and draw enemies
   for (let enemy of enemies) {
-    if (!hit) {
+    if (!enemy.getHit()) {
+      // update and draw enemies
       enemy.display();
+      enemy.chase(map, player);
     }
 
-    for (let bullet = 0; bullet < playerGun.magazine.length; bullet++) {
-      if (
-        dist(
-          playerGun.magazine[bullet].xPos,
-          playerGun.magazine[bullet].yPos,
-          enemy.getPos()[0],
-          enemy.getPos()[1]
-        ) <= 10
-      ) {
-        // bullet hits zombie
-        hit = true;
-        playerGun.magazine.splice(bullet, 1);
-      }
-    }
+    player.setHit(enemy); // Checks if the zombie hits the player
 
-    enemy.chase(map, player);
+    enemy.setHit(player);
   }
 
-  player.update();
+  // Check if zombie is touching player
+  if (!player.getHit()) {
+    player.update();
+  } else {
+    player.setCol(255, 0, 0);
+    // const blood_splat = new Image(40, 40);
+    // blood_splat.src = "/sounds&animations/blood.gif";
+    // document.body.appendChild(blood_splat);
+  }
 
   player.collide(map);
 }
 
 function mouseClicked() {
-  playerGun.shoot(player.getPos(), mouseX, mouseY);
+  player.shoot(mouseX, mouseY);
 }
 
 function keyPressed() {
