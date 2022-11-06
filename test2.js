@@ -7,6 +7,12 @@ class Enemy {
 
   hitStatus = false;
 
+  zombie = loadImage("/sounds&animations/zombie.gif");
+  blood = loadImage("/sounds&animations/blood.gif");
+  zombieSounds = [loadSound("/sounds&animations/zombieSound1.mp3")];
+
+  // zombieSound1 = loadSound("/sounds&animations/zombieSound1.mp3");
+
   constructor(x, y) {
     this.old_position = new p5.Vector(x, y);
     this.position = new p5.Vector(x, y);
@@ -34,13 +40,31 @@ class Enemy {
     return this.hitStatus;
   }
 
-  display() {
+  die() {
+    imageMode(CENTER);
+    image(this.blood, this.position.x, this.position.y, 60, 60);
+  }
+
+  display(target) {
+    // make random zombie sound
+    // this.zombieSounds[0].play();
+
     // display the enemy
-    fill(255, 255, 0);
-    circle(this.position.x, this.position.y, this.width);
+    let angle = Math.atan2(
+      target.position.x - this.position.x,
+      -target.position.y + this.position.y
+    );
+
+    push();
+    translate(this.position.x, this.position.y);
+    rotate(angle - 90 * (Math.PI / 180)); // rotate the zombie image by 90 degrees
+    imageMode(CENTER);
+    image(this.zombie, 0, 0, 60, 60);
+    pop();
 
     // compare the old player position (previous frame) vs the current
     // player position to know whether the enemy is moving up, down, left, or right
+    // Prevents the zombie to pass through walls in the map...
     this.old_position.x = this.position.x;
     this.old_position.y = this.position.y;
   }
@@ -179,7 +203,7 @@ class Player {
 
   magazine = [];
   bullets = 5;
-  bull_speed = 3;
+  bull_speed = 8;
 
   constructor(x, y) {
     this.position = new p5.Vector(x, y);
@@ -189,7 +213,8 @@ class Player {
     this.color = [255, 255, 255];
 
     // The player animation:
-    this.player = loadImage("/sounds&animations/player.png");
+    this.player = loadImage("/sounds&animations/player.gif");
+    this.blood = loadImage("/sounds&animations/blood.gif");
   }
 
   getPos() {
@@ -205,7 +230,7 @@ class Player {
 
     push();
     translate(this.position.x, this.position.y);
-    rotate(angle);
+    rotate(angle - 90 * (Math.PI / 180));
     imageMode(CENTER);
     image(this.player, 0, 0, 50, 50); // (image, xpos, ypos, width, height) // xpos/ypos = 0 bc we translate first
     pop();
@@ -218,6 +243,11 @@ class Player {
   getHit() {
     // was the player hit by the enemy?
     return this.hitStatus;
+  }
+
+  die() {
+    imageMode(CENTER);
+    image(this.blood, this.position.x, this.position.y, 50, 50); // (image, xpos, ypos, width, height) // xpos/ypos = 0 bc we translate first
   }
 
   shoot = function (mouseX, mouseY) {
@@ -243,8 +273,8 @@ class Player {
       this.magazine[bullet].position.y += this.magazine[bullet].velocity.y;
       this.magazine[bullet].position.x += this.magazine[bullet].velocity.x;
 
-      noStroke();
-      fill(0);
+      // noStroke();
+      fill("#a39a0a");
       circle(
         this.magazine[bullet].position.x,
         this.magazine[bullet].position.y,
