@@ -7,6 +7,6 @@ class Bullet {
     this.velocity = new p5.Vector(xVel || 0, yVel || 0);
     // this.xVel = xVel || 0;
     // this.yVel = yVel || 0;
-    this.radius = radius || 10;
+    this.radius = radius || 3;
   }
 }
