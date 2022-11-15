@@ -25,7 +25,8 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(400, 400);
+  let canvas = createCanvas(400, 400);
+  canvas.position(200, 0);
   // rectMode(CENTER);
   // imageMode(CENTER);
 
