@@ -138,29 +138,49 @@ class Enemy {
     }
   }
 }
-
 class Map {
-  tileWidth = 80;
-  tileHeight = 80;
+  // mapArray = [
+  //   [0, 0, 0, 0, 0],
+  //   [0, 1, 1, 1, 0],
+  //   [0, 1, 0, 1, 0],
+  //   [0, 1, 1, 1, 0],
+  //   [0, 0, 0, 0, 0],
+  // ];
   mapArray = [
-    [0, 0, 0, 0, 0],
-    [0, 1, 1, 1, 0],
-    [0, 1, 0, 1, 0],
-    [0, 1, 1, 1, 0],
-    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 1, 1, 1, 1, 0, 0, 1, 0],
+    [0, 1, 1, 1, 1, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ];
 
-  constructor(x, y) {
-    this.position = new p5.Vector(x, y);
+  constructor(xpos, ypos) {
+    this.tileWidth = 50;
+    this.tileHeight = 50;
+
+    // The mapArray col/row
+    this.col = this.mapArray[0].length;
+    this.row = this.mapArray.length;
+
+    // These positions change every time to draw all the tiles on the map
+    this.position = new p5.Vector(xpos, ypos);
+
+    // The true x and y position of the map
+    this.x = xpos;
+    this.y = ypos;
+
+    this.mapWidth = this.tileWidth * this.col;
+    this.mapHeight = this.tileHeight * this.row;
   }
 
   display() {
     // Reset the x and y values so that the map is re-drawn
     // in the same spot after every draw call
-    this.position.x = 0;
-    this.position.y = 0;
+    this.position.x = this.x;
+    this.position.y = this.y;
 
     noStroke();
+
     // The corner of each tile starts at the corner of the screen
     for (let i = 0; i < this.mapArray.length; i++) {
       for (let j = 0; j < this.mapArray[i].length; j++) {
@@ -186,14 +206,14 @@ class Map {
 
         this.position.x += this.tileWidth;
       }
-      this.position.x = 0;
+      // this.xpos = 0;
+      this.position.x = this.x;
       this.position.y += this.tileWidth;
     }
   }
 }
-
 class Player {
-  speed = 5;
+  speed = 4;
   hitStatus = false;
 
   moveRight = false;
@@ -205,7 +225,10 @@ class Player {
   bullets = 5;
   bull_speed = 8;
 
-  constructor(x, y) {
+  height = 30;
+  width = 30;
+
+  constructor(x, y, map) {
     this.position = new p5.Vector(x, y);
     this.velocity = new p5.Vector(0, 0);
 
@@ -215,10 +238,21 @@ class Player {
     // The player animation:
     this.player = loadImage("/sounds&animations/player.gif");
     this.blood = loadImage("/sounds&animations/blood.gif");
+
+    this.map = map;
   }
 
   getPos() {
     return [this.position.x, this.position.y];
+  }
+
+  getAmmo() {
+    // checks the amount of bullets left
+    if (this.bullets > 0) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   setCol(r, g, b) {
@@ -283,63 +317,80 @@ class Player {
     }
   };
 
-  collide(map) {
-    map.position.x = 0;
-    map.position.y = 0; // reset the position of the map so
+  collide() {
+    this.map.position.x = this.map.x;
+    this.map.position.y = this.map.y; // reset the position of the this.map so
     // we can have the correct dimensions
-    for (let i = 0; i < map.mapArray.length; i++) {
-      for (let j = 0; j < map.mapArray[i].length; j++) {
-        if (map.mapArray[i][j] === 0) {
+    for (let i = 0; i < this.map.mapArray.length; i++) {
+      for (let j = 0; j < this.map.mapArray[i].length; j++) {
+        if (this.map.mapArray[i][j] === 0) {
           // A barrier
           if (
-            this.position.x + this.width / 2 > map.position.x &&
-            this.position.x - this.width / 2 < map.position.x + map.tileWidth &&
-            this.position.y + this.width / 2 > map.position.y &&
-            this.position.y - this.width / 2 < map.position.y + map.tileWidth
+            this.position.x + this.width / 2 > this.map.position.x &&
+            this.position.x - this.width / 2 <
+              this.map.position.x + this.map.tileWidth &&
+            this.position.y + this.width / 2 > this.map.position.y &&
+            this.position.y - this.width / 2 <
+              this.map.position.y + this.map.tileWidth
           ) {
-            if (this.moveRight && this.position.x < map.position.x) {
-              this.position.x = map.position.x - this.width / 2;
-            } else if (this.moveDown && this.position.y < map.position.y) {
-              this.position.y = map.position.y - this.width / 2;
-            } else if (
+            if (this.moveRight && this.position.x < this.map.position.x) {
+              this.moveRight = false;
+              this.position.x = this.map.position.x - this.width / 2;
+            }
+            if (this.moveDown && this.position.y < this.map.position.y) {
+              this.moveDown = false;
+              this.position.y = this.map.position.y - this.width / 2;
+            }
+            if (
               this.moveUp &&
-              this.position.y > map.position.y + map.tileHeight
+              this.position.y > this.map.position.y + this.map.tileHeight
             ) {
-              this.position.y = map.position.y + map.tileWidth + this.width / 2;
-            } else if (
+              this.moveUp = false;
+              this.position.y =
+                this.map.position.y + this.map.tileWidth + this.width / 2;
+            }
+            if (
               this.moveLeft &&
-              this.position.x > map.position.x + map.tileWidth
+              this.position.x > this.map.position.x + this.map.tileWidth
             ) {
-              this.position.x = map.position.x + map.tileWidth + this.width / 2;
+              this.moveLeft = false;
+              this.position.x =
+                this.map.position.x + this.map.tileWidth + this.width / 2;
             }
           }
         }
-        map.position.x += map.tileWidth;
+        this.map.position.x += this.map.tileWidth;
       }
-      map.position.x = 0;
-      map.position.y += map.tileWidth;
+      this.map.position.x = this.map.x;
+      this.map.position.y += this.map.tileWidth;
     }
   }
 
   update() {
-    if (
-      (this.moveRight && this.moveUp) ||
-      (this.moveRight && this.moveDown) ||
-      (this.moveLeft && this.moveUp) ||
-      (this.moveLeft && this.moveDown)
-    ) {
-      this.position.x =
-        this.position.x +
-        this.speed * (this.moveRight - this.moveLeft) * Math.SQRT1_2;
-      this.position.y =
-        this.position.y +
-        this.speed * (this.moveDown - this.moveUp) * Math.SQRT1_2;
-    } else {
-      this.position.x =
-        this.position.x + this.speed * (this.moveRight - this.moveLeft);
-      this.position.y =
-        this.position.y + this.speed * (this.moveDown - this.moveUp);
-    }
+    // if (
+    //   (this.moveRight && this.moveUp) ||
+    //   (this.moveRight && this.moveDown) ||
+    //   (this.moveLeft && this.moveUp) ||
+    //   (this.moveLeft && this.moveDown)
+    // ) {
+    //   this.position.x =
+    //     this.position.x +
+    //     this.speed * (this.moveRight - this.moveLeft) * Math.SQRT1_2;
+
+    //   this.position.y =
+    //     this.position.y +
+    //     this.speed * (this.moveDown - this.moveUp) * Math.SQRT1_2;
+    // } else {
+
+    this.map.x = this.map.x - this.speed * (this.moveRight - this.moveLeft);
+    this.map.y = this.map.y - this.speed * (this.moveDown - this.moveUp);
+
+    // this.position.x =
+    //   this.position.x + this.speed * (this.moveRight - this.moveLeft);
+
+    // this.position.y =
+    //   this.position.y + this.speed * (this.moveDown - this.moveUp);
+    // }
   }
 
   move(keyCode, moved) {
